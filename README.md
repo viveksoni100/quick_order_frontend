@@ -1,1 +1,0 @@
-# quick_order_frontend
