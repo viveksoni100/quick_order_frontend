@@ -1,21 +1,24 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
   username: string = '';
   password: string = '';
+  errorMessage: string = '';
 
   constructor(private http: HttpClient) {}
 
   onLogin() {
+    this.errorMessage = '';
     const payload = {
     username: this.username.trim(),
     password: this.password.trim()
@@ -29,7 +32,7 @@ export class LoginComponent {
         },
         error: (error) => {
           console.error('Login failed:', error);
-          // Handle error (show message to user, etc.)
+          this.errorMessage = error.error?.message || 'Login failed. Please try again.';
         }
       });
   }
