@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -15,7 +16,7 @@ export class LoginComponent {
   password: string = '';
   errorMessage: string = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   onLogin() {
     this.errorMessage = '';
@@ -29,6 +30,7 @@ export class LoginComponent {
         next: (response) => {
           console.log('Token:', response.token);
           localStorage.setItem('token', response.token);
+          this.router.navigateByUrl('/admin-panel');
         },
         error: (error) => {
           console.error('Login failed:', error);
