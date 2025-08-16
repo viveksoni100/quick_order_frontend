@@ -21,16 +21,24 @@ export class LoginComponent {
   onLogin() {
     this.errorMessage = '';
     const payload = {
-    username: this.username.trim(),
-    password: this.password.trim()
+      username: this.username.trim(),
+      password: this.password.trim()
     };
 
     this.http.post<any>('http://localhost:9090/api/auth/login', payload)
       .subscribe({
         next: (response) => {
           console.log('Token:', response.token);
+          console.log('Role:', response.role);
           localStorage.setItem('token', response.token);
-          this.router.navigateByUrl('/admin-panel');
+          // Redirect based on role
+          if (response.role === 'ADMIN') {
+            this.router.navigateByUrl('/admin-panel');
+          } else if (response.role === 'USER') {
+            this.router.navigateByUrl('/user-panel');
+          } else {
+            this.errorMessage = 'Unknown user role.';
+          }
         },
         error: (error) => {
           console.error('Login failed:', error);

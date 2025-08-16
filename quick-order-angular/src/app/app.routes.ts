@@ -7,6 +7,6 @@ import { UserPanelComponent } from './user-panel/user-panel.component';
 export const routes: Routes = [
   { path: '', component: LoginComponent },
   { path: 'admin-panel', component: AdminPanelComponent, canActivate: [authGuard] },
-  { path: 'user-panel', component: UserPanelComponent },
+  { path: 'user-panel', component: UserPanelComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];
