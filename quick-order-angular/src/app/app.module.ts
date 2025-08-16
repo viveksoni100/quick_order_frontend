@@ -6,12 +6,12 @@ import { HttpClientModule, provideHttpClient } from '@angular/common/http';
 
 @NgModule({
   declarations: [
-    LoginComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
-    HttpClientModule
+    HttpClientModule,
+    LoginComponent
 ],
   providers: [
     provideHttpClient()
