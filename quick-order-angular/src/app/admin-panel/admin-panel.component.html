@@ -15,11 +15,11 @@
   <div class="flex-grow-1 d-flex flex-column">
     <!-- Top Bar -->
     <div class="d-flex justify-content-end align-items-center p-3 border-bottom">
-      <div class="dropdown">
-        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <div ngbDropdown>
+        <button class="btn btn-light" id="userDropdown" ngbDropdownToggle>
           <i class="bi bi-person-circle fs-4"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end">
+        <ul ngbDropdownMenu aria-labelledby="userDropdown" class="dropdown-menu-end">
           <li><a class="dropdown-item" href="#" (click)="logout()">Logout</a></li>
         </ul>
       </div>
