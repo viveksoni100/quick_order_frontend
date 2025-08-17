@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { API_DOMAIN } from '../constants';
 
 @Component({
   selector: 'app-login',
@@ -25,7 +26,7 @@ export class LoginComponent {
       password: this.password.trim()
     };
 
-    this.http.post<any>('http://localhost:9090/api/auth/login', payload)
+    this.http.post<any>(`${API_DOMAIN}api/auth/login`, payload)
       .subscribe({
         next: (response) => {
           console.log('Token:', response.token);
