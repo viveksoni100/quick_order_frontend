@@ -28,6 +28,7 @@ export class UserPanelComponent {
     isVeg: true,
     isActive: true
   };
+  successMessage: string = '';
 
   constructor(private http: HttpClient) {}
 
@@ -116,10 +117,11 @@ export class UserPanelComponent {
       isActive: !!this.newItem.isActive
     };
 
-    this.http.post(`${API_DOMAIN}api/item/add`, payload, { headers }).subscribe({
-      next: () => {
-        this.showAddForm = false;
-        this.fetchItems();
+    this.http.post(`${API_DOMAIN}api/item/add`, payload, { headers, responseType: 'text' }).subscribe({
+      next: (msg: string) => {
+        this.successMessage = msg; // Show success message
+        this.fetchItems();         // Reload items
+        setTimeout(() => this.successMessage = '', 3000); // Hide after 3s (optional)
       },
       error: err => {
         alert('Failed to add item');
@@ -130,5 +132,21 @@ export class UserPanelComponent {
 
   cancelAddItem() {
     this.showAddForm = false;
+  }
+
+  onImageSelected(event: any) {
+    const file: File = event.target.files[0];
+    if (file) {
+      // You need to upload this file to your server or storage
+      // After upload, set this.newItem.image = uploadedImageUrl;
+      // For now, you can use a FileReader to preview or handle the file
+      // Example for preview:
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        // e.target.result is a base64 string (for preview only)
+        // You still need to upload the file to get a URL for your API
+      };
+      reader.readAsDataURL(file);
+    }
   }
 }

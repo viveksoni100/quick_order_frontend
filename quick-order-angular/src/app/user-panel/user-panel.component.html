@@ -71,6 +71,9 @@
           <div class="col-md-2">
             <input class="form-control" placeholder="Image URL" [(ngModel)]="newItem.image" name="image">
           </div>
+          <!-- <div class="col-md-2">
+            <input class="form-control" type="file" (change)="onImageSelected($event)">
+          </div> -->
           <div class="col-md-1 d-flex align-items-center">
             <label class="me-1">Veg</label>
             <input type="checkbox" [(ngModel)]="newItem.isVeg" name="isVeg">
@@ -85,6 +88,10 @@
           <button type="button" class="btn btn-secondary btn-sm" (click)="cancelAddItem()">Cancel</button>
         </div>
       </form>
+
+      <div *ngIf="successMessage" class="alert alert-success py-2 px-3 mb-2">
+        {{ successMessage }}
+      </div>
 
       <table class="table table-bordered table-striped">
         <thead>
