@@ -108,7 +108,7 @@ export class UserPanelComponent {
       price: '',
       ingredients: '',
       weight: '',
-      image: '',
+      image: null,
       isVeg: true,
       isActive: true
     };
