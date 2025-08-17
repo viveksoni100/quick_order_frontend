@@ -8,7 +8,7 @@
           class="nav-link text-white" 
           [class.active]="activeTab === 'dashboard'"
           style="cursor:pointer"
-          (click)="activeTab = 'dashboard'"
+          (click)="setActiveTab('dashboard')"
         >Dashboard</a>
       </li>
       <li class="nav-item">
@@ -16,7 +16,7 @@
           class="nav-link text-white" 
           [class.active]="activeTab === 'items'"
           style="cursor:pointer"
-          (click)="activeTab = 'items'"
+          (click)="setActiveTab('items')"
         >Items</a>
       </li>
     </ul>
@@ -41,6 +41,38 @@
     <!-- Content Area Items -->
     <div class="p-4" *ngIf="activeTab === 'items'">
       <h2>Items</h2>
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Weight</th>
+            <th>Veg</th>
+            <th>Active</th>
+            <th>Image</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td>{{item.name}}</td>
+            <td>{{item.description}}</td>
+            <td>{{item.price}}</td>
+            <td>{{item.weight}}</td>
+            <td>{{item.isVeg ? 'Yes' : 'No'}}</td>
+            <td>{{item.isActive ? 'Yes' : 'No'}}</td>
+            <td>
+              <img [src]="item.image" alt="{{item.name}}" width="50" height="50">
+            </td>
+            <td>
+              <!-- Add edit/delete buttons here -->
+              <button class="btn btn-sm btn-primary me-1">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
