@@ -41,6 +41,9 @@ export class UserPanelComponent {
   showDeleteModal = false;
   itemIdToDelete: number | null = null;
 
+  editMode: boolean = false;
+  editItemId: number | null = null;
+
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
@@ -112,6 +115,15 @@ export class UserPanelComponent {
     this.fetchCategories();
   }
 
+  onEditItem(item: any) {
+    this.editMode = true;
+    this.showAddForm = true;
+    this.editItemId = item.id;
+    // Deep copy to avoid mutating the table directly
+    this.newItem = { ...item };
+    this.fetchCategories();
+  }
+
   submitNewItem() {
     const menuId = localStorage.getItem('menuId');
     const token = localStorage.getItem('token');
@@ -131,21 +143,43 @@ export class UserPanelComponent {
       isActive: !!this.newItem.isActive
     };
 
-    this.http.post(`${API_DOMAIN}api/item/add`, payload, { headers, responseType: 'text' }).subscribe({
-      next: (msg: string) => {
-        this.successMessage = msg; // Show success message
-        this.fetchItems();         // Reload items
-        setTimeout(() => this.successMessage = '', 3000); // Hide after 3s (optional)
-      },
-      error: err => {
-        alert('Failed to add item');
-        console.error(err);
-      }
-    });
+    if (this.editMode && this.editItemId !== null) {
+      // PATCH for update
+      this.http.patch(`${API_DOMAIN}api/item/edit`, payload, { headers, responseType: 'text' }).subscribe({
+        next: (msg: string) => {
+          this.successMessage = msg;
+          this.showAddForm = false;
+          this.editMode = false;
+          this.editItemId = null;
+          this.fetchItems();
+          setTimeout(() => this.successMessage = '', 3000);
+        },
+        error: err => {
+          alert('Failed to update item');
+          console.error(err);
+        }
+      });
+    } else {
+      // POST for add
+      this.http.post(`${API_DOMAIN}api/item/add`, payload, { headers, responseType: 'text' }).subscribe({
+        next: (msg: string) => {
+          this.successMessage = msg;
+          this.showAddForm = false;
+          this.fetchItems();
+          setTimeout(() => this.successMessage = '', 3000);
+        },
+        error: err => {
+          alert('Failed to add item');
+          console.error(err);
+        }
+      });
+    }
   }
 
   cancelAddItem() {
     this.showAddForm = false;
+    this.editMode = false;
+    this.editItemId = null;
   }
 
   onImageSelected(event: any) {
