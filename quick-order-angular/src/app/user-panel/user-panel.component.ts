@@ -29,6 +29,7 @@ export class UserPanelComponent {
     isActive: true
   };
   successMessage: string = '';
+  errorMessage: string = ''; 
 
   searchText: string = '';
   filteredItems: any[] = [];
@@ -36,6 +37,9 @@ export class UserPanelComponent {
   currentPage: number = 1;
   pageSize: number = 5;
   totalPages: number = 1;
+
+  showDeleteModal = false;
+  itemIdToDelete: number | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -204,4 +208,63 @@ export class UserPanelComponent {
       this.paginate();
     }
   }
+
+  deleteItem(itemId: number) {
+    if (confirm('Are you sure?')) {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const headers = new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      });
+
+      this.http.delete(`${API_DOMAIN}api/item/removeById/${itemId}`, { headers, responseType: 'text' })
+        .subscribe({
+          next: (msg: string) => {
+            this.errorMessage = msg; // Show API response in red alert
+            this.fetchItems();       // Refresh items
+            setTimeout(() => this.errorMessage = '', 3000); // Hide after 3s (optional)
+          },
+          error: err => {
+            this.errorMessage = 'Failed to delete item';
+            setTimeout(() => this.errorMessage = '', 3000);
+          }
+        });
+    }
+  }
+
+  openDeleteModal(itemId: number) {
+  this.itemIdToDelete = itemId;
+  this.showDeleteModal = true;
+}
+
+closeDeleteModal() {
+  this.showDeleteModal = false;
+  this.itemIdToDelete = null;
+}
+
+confirmDelete() {
+  if (this.itemIdToDelete !== null) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`
+    });
+
+    this.http.delete(`${API_DOMAIN}api/item/removeById/${this.itemIdToDelete}`, { headers, responseType: 'text' })
+      .subscribe({
+        next: (msg: string) => {
+          this.errorMessage = msg;
+          this.fetchItems();
+          setTimeout(() => this.errorMessage = '', 3000);
+        },
+        error: err => {
+          this.errorMessage = 'Failed to delete item';
+          setTimeout(() => this.errorMessage = '', 3000);
+        }
+      });
+  }
+  this.closeDeleteModal();
+}
 }
