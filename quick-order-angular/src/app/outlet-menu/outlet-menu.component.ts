@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 export class OutletMenuComponent {
   outletId: string | null = null;
   menuId: string | null = null;
+  tableId: string | null = null;
 
   items: any[] = [];
   filteredItems: any[] = [];
@@ -27,6 +28,7 @@ export class OutletMenuComponent {
     this.route.queryParamMap.subscribe(params => {
       this.outletId = params.get('outletId');
       this.menuId = params.get('menuId');
+      this.tableId = params.get('tableId');
     });
   }
 

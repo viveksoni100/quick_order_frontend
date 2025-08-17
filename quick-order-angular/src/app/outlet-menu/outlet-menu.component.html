@@ -1,7 +1,12 @@
 <div class="container-fluid" style="min-height:100vh; background: #f8f9fa;">
   <div class="row">
-    <!-- Sidebar: Categories -->
-    <nav class="col-md-2 d-none d-md-block bg-white sidebar shadow-sm py-4 px-2 rounded-3" style="min-height: 90vh;">
+    <!-- Mobile: Offcanvas trigger button -->
+    <button class="btn btn-outline-primary d-md-none my-2 ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#categoryOffcanvas" aria-controls="categoryOffcanvas">
+      <span style="font-size: 1.5rem;">&#9776;</span>
+    </button>
+
+    <!-- Desktop: Sidebar -->
+    <nav class="col-md-2 d-none d-md-block bg-white sidebar shadow-sm py-4 px-2 rounded-3 mb-3 mb-md-0" style="min-height: 90vh;">
       <h5 class="mb-4 text-primary">Categories</h5>
       <ul class="nav flex-column">
         <li class="nav-item mb-2">
@@ -17,9 +22,31 @@
       </ul>
     </nav>
 
+    <!-- Mobile: Offcanvas Sidebar -->
+    <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="categoryOffcanvas" aria-labelledby="categoryOffcanvasLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title text-primary" id="categoryOffcanvasLabel">Categories</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <ul class="nav flex-column">
+          <li class="nav-item mb-2">
+            <a class="nav-link" [ngClass]="{'active fw-bold text-primary': !selectedCategory}" style="cursor:pointer" (click)="selectCategory(null)" data-bs-dismiss="offcanvas">
+              All
+            </a>
+          </li>
+          <li class="nav-item mb-2" *ngFor="let cat of uniqueCategories">
+            <a class="nav-link" [ngClass]="{'active fw-bold text-primary': selectedCategory === cat}" style="cursor:pointer" (click)="selectCategory(cat)" data-bs-dismiss="offcanvas">
+              {{cat}}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
     <!-- Main Content: Menu Items -->
     <main class="col-md-7 py-4">
-      <h2 class="mb-4 text-center text-success">Hotel Menu</h2>
+      <h2 class="mb-4 text-center text-primary">Hotel Menu</h2>
       <div class="row g-4">
         <div class="col-md-6 col-lg-4" *ngFor="let item of filteredItems">
           <div class="card h-100 shadow-sm border-0">
