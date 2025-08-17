@@ -40,7 +40,10 @@
     </div>
     <!-- Content Area Items -->
     <div class="p-4" *ngIf="activeTab === 'items'">
-      <h2>Items</h2>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Items</h2>
+        <button class="btn btn-success" (click)="onAddItem()">Add Item</button>
+      </div>
       <table class="table table-bordered table-striped">
         <thead>
           <tr>
@@ -66,7 +69,6 @@
               <img [src]="item.image" alt="{{item.name}}" width="50" height="50">
             </td>
             <td>
-              <!-- Add edit/delete buttons here -->
               <button class="btn btn-sm btn-primary me-1">Edit</button>
               <button class="btn btn-sm btn-danger">Delete</button>
             </td>
@@ -76,3 +78,20 @@
     </div>
   </div>
 </div>
+
+<script>
+// Add your imports here
+
+@Component({
+  selector: 'app-user-panel',
+  templateUrl: './user-panel.component.html',
+  styleUrls: ['./user-panel.component.css']
+})
+export class UserPanelComponent implements OnInit {
+
+  onAddItem(): void {
+    // TODO: Implement add item logic here
+    console.log('Add Item clicked');
+  }
+}
+</script>

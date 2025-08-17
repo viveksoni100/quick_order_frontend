@@ -52,4 +52,7 @@ export class UserPanelComponent {
   }
 
   // Add CRUD methods here (add, edit, delete)
+  onAddItem() {
+    throw new Error('Method not implemented.');
+  }
 }
