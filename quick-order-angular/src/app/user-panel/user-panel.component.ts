@@ -10,7 +10,9 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
   styleUrl: './user-panel.component.css'
 })
 export class UserPanelComponent {
-logout() {
+  activeTab: string = 'dashboard';
+
+  logout() {
     localStorage.removeItem('token');
     window.location.href = '/';
   }

@@ -30,7 +30,11 @@ export class LoginComponent {
         next: (response) => {
           console.log('Token:', response.token);
           console.log('Role:', response.role);
+          console.log('MenuId:', response.menuId);
+          console.log('OutletId:', response.outletId);
           localStorage.setItem('token', response.token);
+          localStorage.setItem('menuId', response.menuId);
+          localStorage.setItem('outletId', response.outletId);
           // Redirect based on role
           if (response.role === 'ADMIN') {
             this.router.navigateByUrl('/admin-panel');

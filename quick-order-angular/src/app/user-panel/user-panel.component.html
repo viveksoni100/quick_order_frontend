@@ -4,11 +4,21 @@
     <h4 class="mb-4">User Panel</h4>
     <ul class="nav flex-column">
       <li class="nav-item mb-2">
-        <a class="nav-link text-white" href="#">Add Item</a>
+        <a 
+          class="nav-link text-white" 
+          [class.active]="activeTab === 'dashboard'"
+          style="cursor:pointer"
+          (click)="activeTab = 'dashboard'"
+        >Dashboard</a>
       </li>
-      <!-- <li class="nav-item">
-        <a class="nav-link text-white" href="#">On-board</a>
-      </li> -->
+      <li class="nav-item">
+        <a 
+          class="nav-link text-white" 
+          [class.active]="activeTab === 'items'"
+          style="cursor:pointer"
+          (click)="activeTab = 'items'"
+        >Items</a>
+      </li>
     </ul>
   </nav>
   <!-- Main Content -->
@@ -24,10 +34,13 @@
         </ul>
       </div>
     </div>
-    <!-- Content Area -->
-    <div class="p-4">
-      <h2>Welcome to User Panel</h2>
-      <p>Select an option from the sidebar.</p>
+    <!-- Content Area Dashboard -->
+    <div class="p-4" *ngIf="activeTab === 'dashboard'">
+      <h2>Dashboard</h2>
+    </div>
+    <!-- Content Area Items -->
+    <div class="p-4" *ngIf="activeTab === 'items'">
+      <h2>Items</h2>
     </div>
   </div>
 </div>
