@@ -93,7 +93,26 @@
         {{ successMessage }}
       </div>
 
-      <table class="table table-bordered table-striped">
+      <!-- Search and page size controls -->
+      <div class="row mb-2">
+        <div class="col-md-6">
+          <label>
+            Show
+            <select class="form-select d-inline-block w-auto mx-1" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            entries
+          </label>
+        </div>
+        <div class="col-md-6 text-end">
+          <input type="search" class="form-control d-inline-block w-auto" style="min-width:200px;" placeholder="Search..." [(ngModel)]="searchText" (input)="onSearch()" />
+        </div>
+      </div>
+
+      <table class="table table-bordered table-striped align-middle">
         <thead>
           <tr>
             <th>Name</th>
@@ -107,7 +126,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of items">
+          <tr *ngFor="let item of paginatedItems">
             <td>{{item.name}}</td>
             <td>{{item.description}}</td>
             <td>{{item.price}}</td>
@@ -122,8 +141,28 @@
               <button class="btn btn-sm btn-danger">Delete</button>
             </td>
           </tr>
+          <tr *ngIf="paginatedItems.length === 0">
+            <td colspan="8" class="text-center">No items found.</td>
+          </tr>
         </tbody>
       </table>
+
+      <!-- Pagination controls -->
+      <nav>
+        <ul class="pagination justify-content-end">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+          </li>
+          <li class="page-item disabled">
+            <span class="page-link">
+              Page {{currentPage}} of {{totalPages}}
+            </span>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+          </li>
+        </ul>
+      </nav>
     </div>
   </div>
 </div>

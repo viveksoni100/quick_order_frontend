@@ -30,6 +30,13 @@ export class UserPanelComponent {
   };
   successMessage: string = '';
 
+  searchText: string = '';
+  filteredItems: any[] = [];
+  paginatedItems: any[] = [];
+  currentPage: number = 1;
+  pageSize: number = 5;
+  totalPages: number = 1;
+
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
@@ -49,7 +56,10 @@ export class UserPanelComponent {
 
     this.http.get<any[]>(`${API_DOMAIN}api/item/getAllByMenuId/${menuId}`, { headers })
       .subscribe({
-        next: (data) => this.items = data,
+        next: (data) => {
+          this.items = data;
+          this.applySearchAndPagination(); // Apply search and pagination after fetching items
+        },
         error: (err) => console.error('Failed to fetch items', err)
       });
   }
@@ -147,6 +157,51 @@ export class UserPanelComponent {
         // You still need to upload the file to get a URL for your API
       };
       reader.readAsDataURL(file);
+    }
+  }
+
+  onSearch() {
+    this.currentPage = 1;
+    this.applySearchAndPagination();
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 1;
+    this.applySearchAndPagination();
+  }
+
+  applySearchAndPagination() {
+    // Filter
+    const search = this.searchText?.trim().toLowerCase() || '';
+    this.filteredItems = search
+      ? this.items.filter(item =>
+          item.name.toLowerCase().includes(search) ||
+          item.description.toLowerCase().includes(search)
+        )
+      : [...this.items];
+
+    // Pagination
+    this.totalPages = Math.ceil(this.filteredItems.length / this.pageSize) || 1;
+    this.paginate();
+  }
+
+  paginate() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    this.paginatedItems = this.filteredItems.slice(start, end);
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.paginate();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.paginate();
     }
   }
 }
