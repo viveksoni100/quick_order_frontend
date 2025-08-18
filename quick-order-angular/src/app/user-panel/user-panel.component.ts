@@ -35,7 +35,7 @@ export class UserPanelComponent {
   filteredItems: any[] = [];
   paginatedItems: any[] = [];
   currentPage: number = 1;
-  pageSize: number = 5;
+  pageSize: number = 10;
   totalPages: number = 1;
 
   showDeleteModal = false;
