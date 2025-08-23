@@ -52,9 +52,24 @@ export class UserPanelComponent {
   catPageSize: number = 10;
   catTotalPages: number = 1;
 
+  // Tables state
+  tables: any[] = [];
+  showAddTableForm = false;
+  editTableMode = false;
+  editTableId: number | null = null;
+  newTable: { tableNo: string; sittingCapacity: number | '' } = { tableNo: '', sittingCapacity: '' };
+
+  // Tables search/pagination
+  tableSearchText: string = '';
+  tableFiltered: any[] = [];
+  tablePaginated: any[] = [];
+  tableCurrentPage: number = 1;
+  tablePageSize: number = 10;
+  tableTotalPages: number = 1;
+
   // Shared delete modal state (items or categories)
   showDeleteModal = false;            // already present for items; keep unified
-  deleteType: 'item' | 'category' = 'item';
+  deleteType: 'item' | 'category' | 'table' = 'item';
   idToDelete: number | null = null;
 
   // Item edit state (missing fields causing errors)
@@ -112,6 +127,9 @@ export class UserPanelComponent {
     }
     if (tab === 'categories') {
       this.fetchCategoriesList();
+    }
+    if (tab === 'tables') {
+      this.fetchTablesList();
     }
   }
 
@@ -395,6 +413,158 @@ export class UserPanelComponent {
     return;
   }
 
+  // Tables CRUD
+  fetchTablesList() {
+    const outletId = Number(localStorage.getItem('outletId'));
+    const token = localStorage.getItem('token');
+    if (!outletId || !token) return;
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http.get<any[]>(`${API_DOMAIN}api/table/getAllByOutletId/${outletId}`, { headers })
+      .subscribe({
+        next: (data) => {
+          this.tables = data;
+          this.applyTableSearchAndPagination();
+        },
+        error: (err) => {
+          this.errorMessage = 'Failed to load tables';
+          console.error(err);
+          setTimeout(() => this.errorMessage = '', 3000);
+        }
+      });
+  }
+
+  onAddTable() {
+    this.showAddTableForm = true;
+    this.editTableMode = false;
+    this.editTableId = null;
+    this.newTable = { tableNo: '', sittingCapacity: '' };
+  }
+
+  onEditTable(t: any) {
+    // Optionally you can fetch by id to be strict:
+    // this.loadTableById(t.id);
+    this.showAddTableForm = true;
+    this.editTableMode = true;
+    this.editTableId = t.id;
+    this.newTable = { tableNo: t.tableNo, sittingCapacity: t.sittingCapacity };
+  }
+
+  cancelAddTable() {
+    this.showAddTableForm = false;
+    this.editTableMode = false;
+    this.editTableId = null;
+    this.newTable = { tableNo: '', sittingCapacity: '' };
+  }
+
+  // Optional: load by id for edit (if needed)
+  loadTableById(id: number) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http.get<any>(`${API_DOMAIN}api/table/getById/${id}`, { headers })
+      .subscribe({
+        next: (t) => {
+          this.showAddTableForm = true;
+          this.editTableMode = true;
+          this.editTableId = t.id;
+          this.newTable = { tableNo: t.tableNo, sittingCapacity: t.sittingCapacity };
+        }
+      });
+  }
+
+  submitTable() {
+    const outletId = Number(localStorage.getItem('outletId'));
+    const token = localStorage.getItem('token');
+    if (!outletId || !token) return;
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    const payload = {
+      ...(this.editTableMode && this.editTableId !== null ? { id: this.editTableId } : {}),
+      tableNo: this.newTable.tableNo.trim(),
+      outletId,
+      sittingCapacity: Number(this.newTable.sittingCapacity)
+    };
+
+    if (this.editTableMode && this.editTableId !== null) {
+      this.http.patch(`${API_DOMAIN}api/table/edit`, payload, { headers, responseType: 'text' })
+        .subscribe({
+          next: (msg: string) => {
+            this.successMessage = msg;
+            this.cancelAddTable();
+            this.fetchTablesList();
+            setTimeout(() => this.successMessage = '', 3000);
+          },
+          error: (err) => {
+            this.errorMessage = 'Failed to update table';
+            console.error(err);
+            setTimeout(() => this.errorMessage = '', 3000);
+          }
+        });
+    } else {
+      this.http.post(`${API_DOMAIN}api/table/add`, payload, { headers, responseType: 'text' })
+        .subscribe({
+          next: (msg: string) => {
+            this.successMessage = msg;
+            this.cancelAddTable();
+            this.fetchTablesList();
+            setTimeout(() => this.successMessage = '', 3000);
+          },
+          error: (err) => {
+            this.errorMessage = 'Failed to add table';
+            console.error(err);
+            setTimeout(() => this.errorMessage = '', 3000);
+          }
+        });
+    }
+  }
+
+  // Search/Pagination helpers
+  onTableSearch() {
+    this.tableCurrentPage = 1;
+    this.applyTableSearchAndPagination();
+  }
+
+  onTablePageSizeChange() {
+    this.tableCurrentPage = 1;
+    this.applyTableSearchAndPagination();
+  }
+
+  applyTableSearchAndPagination() {
+    const q = this.tableSearchText?.trim().toLowerCase() || '';
+    const src = this.tables || [];
+    this.tableFiltered = q
+      ? src.filter(t => t.tableNo?.toLowerCase().includes(q))
+      : [...src];
+
+    this.tableTotalPages = Math.ceil(this.tableFiltered.length / this.tablePageSize) || 1;
+    this.tablePaginate();
+  }
+
+  tablePaginate() {
+    const start = (this.tableCurrentPage - 1) * this.tablePageSize;
+    const end = start + this.tablePageSize;
+    this.tablePaginated = this.tableFiltered.slice(start, end);
+  }
+
+  tableNextPage() {
+    if (this.tableCurrentPage < this.tableTotalPages) {
+      this.tableCurrentPage++;
+      this.tablePaginate();
+    }
+  }
+
+  tablePrevPage() {
+    if (this.tableCurrentPage > 1) {
+      this.tableCurrentPage--;
+      this.tablePaginate();
+    }
+  }
+
   // Delete modal (support items and categories)
   openDeleteModal(itemId: number) {           // existing for items; keep for compatibility
     this.deleteType = 'item';
@@ -405,6 +575,13 @@ export class UserPanelComponent {
   openDeleteModalForCategory(catId: number) {
     this.deleteType = 'category';
     this.idToDelete = catId;
+    this.showDeleteModal = true;
+  }
+
+  // Delete: open modal for table
+  openDeleteModalForTable(id: number) {
+    this.deleteType = 'table';
+    this.idToDelete = id;
     this.showDeleteModal = true;
   }
 
@@ -423,7 +600,7 @@ export class UserPanelComponent {
       this.http.delete(`${API_DOMAIN}api/category/removeById/${this.idToDelete}`, { headers, responseType: 'text' })
         .subscribe({
           next: (msg: string) => {
-            this.errorMessage = msg;          // red alert by your requirement
+            this.errorMessage = msg;
             this.fetchCategoriesList();
             setTimeout(() => this.errorMessage = '', 3000);
           },
@@ -432,12 +609,24 @@ export class UserPanelComponent {
             setTimeout(() => this.errorMessage = '', 3000);
           }
         });
+    } else if (this.deleteType === 'table') {
+      this.http.delete(`${API_DOMAIN}api/table/removeById/${this.idToDelete}`, { headers, responseType: 'text' })
+        .subscribe({
+          next: (msg: string) => {
+            this.errorMessage = msg;
+            this.fetchTablesList();
+            setTimeout(() => this.errorMessage = '', 3000);
+          },
+          error: () => {
+            this.errorMessage = 'Failed to delete table';
+            setTimeout(() => this.errorMessage = '', 3000);
+          }
+        });
     } else {
-      // existing item delete path
       this.http.delete(`${API_DOMAIN}api/item/removeById/${this.idToDelete}`, { headers, responseType: 'text' })
         .subscribe({
           next: (msg: string) => {
-            this.errorMessage = msg;          // red alert
+            this.errorMessage = msg;
             this.fetchItems();
             setTimeout(() => this.errorMessage = '', 3000);
           },

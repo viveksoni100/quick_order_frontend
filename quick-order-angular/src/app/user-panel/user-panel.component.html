@@ -28,6 +28,15 @@
           (click)="setActiveTab('categories')"
         >Categories</a>
       </li>
+      <!-- NEW: Tables tab -->
+      <li class="nav-item">
+        <a 
+          class="nav-link text-white" 
+          [class.active]="activeTab === 'tables'"
+          style="cursor:pointer"
+          (click)="setActiveTab('tables')"
+        >Tables</a>
+      </li>
     </ul>
   </nav>
   <!-- Main Content -->
@@ -268,6 +277,100 @@
         </ul>
       </nav>
     </div>
+    <!-- Content Area Tables -->
+    <div class="p-4" *ngIf="activeTab === 'tables'">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Tables</h2>
+        <button class="btn btn-success" (click)="onAddTable()">Add Table</button>
+      </div>
+
+      <!-- Alerts -->
+      <div *ngIf="successMessage" class="alert alert-success py-2 px-3 mb-2">
+        {{ successMessage }}
+      </div>
+      <div *ngIf="errorMessage" class="alert alert-danger py-2 px-3 mb-2">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Add/Edit Table form -->
+      <form *ngIf="showAddTableForm" class="border p-3 mb-3 bg-light rounded" (ngSubmit)="submitTable()">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Table No</label>
+            <input class="form-control" placeholder="e.g. A-12" [(ngModel)]="newTable.tableNo" name="tableNo" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Sitting Capacity</label>
+            <input class="form-control" type="number" min="1" [(ngModel)]="newTable.sittingCapacity" name="sittingCapacity" required>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary btn-sm me-2">
+              {{ editTableMode ? 'Update' : 'Save' }}
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="cancelAddTable()">Cancel</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Search and page size controls -->
+      <div class="row mb-2">
+        <div class="col-md-6">
+          <label>
+            Show
+            <select class="form-select d-inline-block w-auto mx-1" [(ngModel)]="tablePageSize" (change)="onTablePageSizeChange()">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            entries
+          </label>
+        </div>
+        <div class="col-md-6 text-end">
+          <input type="search" class="form-control d-inline-block w-auto" style="min-width:200px;"
+                 placeholder="Search..." [(ngModel)]="tableSearchText" (input)="onTableSearch()" />
+        </div>
+      </div>
+
+      <!-- Tables list -->
+      <table class="table table-bordered table-striped align-middle">
+        <thead>
+          <tr>
+            <th>Table No</th>
+            <th>Sitting Capacity</th>
+            <th style="width:180px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of tablePaginated">
+            <td>{{ t.tableNo }}</td>
+            <td>{{ t.sittingCapacity }}</td>
+            <td>
+              <button class="btn btn-sm btn-primary me-1" (click)="onEditTable(t)">Edit</button>
+              <button class="btn btn-sm btn-danger" (click)="openDeleteModalForTable(t.id)">Delete</button>
+            </td>
+          </tr>
+          <tr *ngIf="tablePaginated.length === 0">
+            <td colspan="3" class="text-center">No tables found.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination controls -->
+      <nav>
+        <ul class="pagination justify-content-end">
+          <li class="page-item" [class.disabled]="tableCurrentPage === 1">
+            <button class="page-link" (click)="tablePrevPage()" [disabled]="tableCurrentPage === 1">Previous</button>
+          </li>
+          <li class="page-item disabled">
+            <span class="page-link">Page {{tableCurrentPage}} of {{tableTotalPages}}</span>
+          </li>
+          <li class="page-item" [class.disabled]="tableCurrentPage === tableTotalPages">
+            <button class="page-link" (click)="tableNextPage()" [disabled]="tableCurrentPage === tableTotalPages">Next</button>
+          </li>
+        </ul>
+      </nav>
+    </div>
   </div>
 </div>
 
@@ -280,7 +383,7 @@
         <button type="button" class="btn-close" aria-label="Close" (click)="closeDeleteModal()"></button>
       </div>
       <div class="modal-body">
-        <p>Are you sure you want to delete this {{ deleteType === 'category' ? 'category' : 'item' }}?</p>
+        <p>Are you sure you want to delete this {{ deleteType }}?</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
