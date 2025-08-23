@@ -38,9 +38,26 @@ export class UserPanelComponent {
   pageSize: number = 10;
   totalPages: number = 1;
 
-  showDeleteModal = false;
-  itemIdToDelete: number | null = null;
+  // Categories state
+  showAddCategoryForm = false;
+  editCategoryMode = false;
+  editCategoryId: number | null = null;
+  newCategory: { name: string } = { name: '' };
 
+  // Categories list + pagination/search (separate from items)
+  catSearchText: string = '';
+  catFiltered: any[] = [];
+  catPaginated: any[] = [];
+  catCurrentPage: number = 1;
+  catPageSize: number = 10;
+  catTotalPages: number = 1;
+
+  // Shared delete modal state (items or categories)
+  showDeleteModal = false;            // already present for items; keep unified
+  deleteType: 'item' | 'category' = 'item';
+  idToDelete: number | null = null;
+
+  // Item edit state (missing fields causing errors)
   editMode: boolean = false;
   editItemId: number | null = null;
 
@@ -87,10 +104,14 @@ export class UserPanelComponent {
       });
   }
 
+  // Enhance tab switching to load data
   setActiveTab(tab: string) {
     this.activeTab = tab;
     if (tab === 'items') {
       this.fetchItems();
+    }
+    if (tab === 'categories') {
+      this.fetchCategoriesList();
     }
   }
 
@@ -152,9 +173,9 @@ export class UserPanelComponent {
           this.editMode = false;
           this.editItemId = null;
           this.fetchItems();
-          setTimeout(() => this.successMessage = '', 3000);
+          setTimeout(() => (this.successMessage = ''), 3000);
         },
-        error: err => {
+        error: (err) => {
           alert('Failed to update item');
           console.error(err);
         }
@@ -166,9 +187,9 @@ export class UserPanelComponent {
           this.successMessage = msg;
           this.showAddForm = false;
           this.fetchItems();
-          setTimeout(() => this.successMessage = '', 3000);
+          setTimeout(() => (this.successMessage = ''), 3000);
         },
-        error: err => {
+        error: (err) => {
           alert('Failed to add item');
           console.error(err);
         }
@@ -243,62 +264,190 @@ export class UserPanelComponent {
     }
   }
 
-  deleteItem(itemId: number) {
-    if (confirm('Are you sure?')) {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+  // Categories CRUD
+  fetchCategoriesList() {
+    const menuId = localStorage.getItem('menuId');
+    const token = localStorage.getItem('token');
+    if (!menuId || !token) return;
 
-      const headers = new HttpHeaders({
-        Authorization: `Bearer ${token}`
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http.get<any[]>(`${API_DOMAIN}api/category/getAllByMenuId/${menuId}`, { headers })
+      .subscribe({
+        next: (data) => {
+          this.categories = data;           // reuse existing categories array
+          this.applyCatSearchAndPagination();
+        },
+        error: (err) => {
+          this.errorMessage = 'Failed to load categories';
+          console.error(err);
+          setTimeout(() => this.errorMessage = '', 3000);
+        }
       });
+  }
 
-      this.http.delete(`${API_DOMAIN}api/item/removeById/${itemId}`, { headers, responseType: 'text' })
+  onAddCategory() {
+    this.showAddCategoryForm = true;
+    this.editCategoryMode = false;
+    this.editCategoryId = null;
+    this.newCategory = { name: '' };
+  }
+
+  onEditCategory(cat: any) {
+    this.showAddCategoryForm = true;
+    this.editCategoryMode = true;
+    this.editCategoryId = cat.id;
+    this.newCategory = { name: cat.name };
+  }
+
+  cancelAddCategory() {
+    this.showAddCategoryForm = false;
+    this.editCategoryMode = false;
+    this.editCategoryId = null;
+    this.newCategory = { name: '' };
+  }
+
+  submitCategory() {
+    const menuId = localStorage.getItem('menuId');
+    const token = localStorage.getItem('token');
+    if (!menuId || !token) return;
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    if (this.editCategoryMode && this.editCategoryId !== null) {
+      const payload = { id: this.editCategoryId, menuId: Number(menuId), name: this.newCategory.name.trim() };
+      this.http.patch(`${API_DOMAIN}api/category/edit`, payload, { headers, responseType: 'text' })
         .subscribe({
           next: (msg: string) => {
-            this.errorMessage = msg; // Show API response in red alert
-            this.fetchItems();       // Refresh items
-            setTimeout(() => this.errorMessage = '', 3000); // Hide after 3s (optional)
+            this.successMessage = msg;
+            this.cancelAddCategory();
+            this.fetchCategoriesList();
+            setTimeout(() => this.successMessage = '', 3000);
           },
-          error: err => {
-            this.errorMessage = 'Failed to delete item';
+          error: (err) => {
+            this.errorMessage = 'Failed to update category';
+            console.error(err);
+            setTimeout(() => this.errorMessage = '', 3000);
+          }
+        });
+    } else {
+      const payload = { menuId: Number(menuId), name: this.newCategory.name.trim() };
+      this.http.post(`${API_DOMAIN}api/category/add`, payload, { headers, responseType: 'text' })
+        .subscribe({
+          next: (msg: string) => {
+            this.successMessage = msg;
+            this.cancelAddCategory();
+            this.fetchCategoriesList();
+            setTimeout(() => this.successMessage = '', 3000);
+          },
+          error: (err) => {
+            this.errorMessage = 'Failed to add category';
+            console.error(err);
             setTimeout(() => this.errorMessage = '', 3000);
           }
         });
     }
   }
 
-  openDeleteModal(itemId: number) {
-  this.itemIdToDelete = itemId;
-  this.showDeleteModal = true;
-}
-
-closeDeleteModal() {
-  this.showDeleteModal = false;
-  this.itemIdToDelete = null;
-}
-
-confirmDelete() {
-  if (this.itemIdToDelete !== null) {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`
-    });
-
-    this.http.delete(`${API_DOMAIN}api/item/removeById/${this.itemIdToDelete}`, { headers, responseType: 'text' })
-      .subscribe({
-        next: (msg: string) => {
-          this.errorMessage = msg;
-          this.fetchItems();
-          setTimeout(() => this.errorMessage = '', 3000);
-        },
-        error: err => {
-          this.errorMessage = 'Failed to delete item';
-          setTimeout(() => this.errorMessage = '', 3000);
-        }
-      });
+  // Category search/pagination
+  onCatSearch() {
+    this.catCurrentPage = 1;
+    this.applyCatSearchAndPagination();
   }
-  this.closeDeleteModal();
-}
+
+  onCatPageSizeChange() {
+    this.catCurrentPage = 1;
+    this.applyCatSearchAndPagination();
+  }
+
+  applyCatSearchAndPagination() {
+    const search = this.catSearchText?.trim().toLowerCase() || '';
+    const source = this.categories || [];
+    this.catFiltered = search
+      ? source.filter(c => c.name?.toLowerCase().includes(search))
+      : [...source];
+
+    this.catTotalPages = Math.ceil(this.catFiltered.length / this.catPageSize) || 1;
+    this.catPaginate();
+  }
+
+  catPaginate() {
+    const start = (this.catCurrentPage - 1) * this.catPageSize;
+    const end = start + this.catPageSize;
+    this.catPaginated = this.catFiltered.slice(start, end);
+  }
+
+  catNextPage() {
+    if (this.catCurrentPage < this.catTotalPages) {
+      this.catCurrentPage++;
+      this.catPaginate();
+    }
+    return;
+  }
+
+  catPrevPage() {
+    if (this.catCurrentPage > 1) {
+      this.catCurrentPage--;
+      this.catPaginate();
+    }
+    return;
+  }
+
+  // Delete modal (support items and categories)
+  openDeleteModal(itemId: number) {           // existing for items; keep for compatibility
+    this.deleteType = 'item';
+    this.idToDelete = itemId;
+    this.showDeleteModal = true;
+  }
+
+  openDeleteModalForCategory(catId: number) {
+    this.deleteType = 'category';
+    this.idToDelete = catId;
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal() {
+    this.showDeleteModal = false;
+    this.idToDelete = null;
+  }
+
+  confirmDelete() {
+    const token = localStorage.getItem('token');
+    if (!token || this.idToDelete === null) { this.closeDeleteModal(); return; }
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    if (this.deleteType === 'category') {
+      this.http.delete(`${API_DOMAIN}api/category/removeById/${this.idToDelete}`, { headers, responseType: 'text' })
+        .subscribe({
+          next: (msg: string) => {
+            this.errorMessage = msg;          // red alert by your requirement
+            this.fetchCategoriesList();
+            setTimeout(() => this.errorMessage = '', 3000);
+          },
+          error: () => {
+            this.errorMessage = 'Failed to delete category';
+            setTimeout(() => this.errorMessage = '', 3000);
+          }
+        });
+    } else {
+      // existing item delete path
+      this.http.delete(`${API_DOMAIN}api/item/removeById/${this.idToDelete}`, { headers, responseType: 'text' })
+        .subscribe({
+          next: (msg: string) => {
+            this.errorMessage = msg;          // red alert
+            this.fetchItems();
+            setTimeout(() => this.errorMessage = '', 3000);
+          },
+          error: () => {
+            this.errorMessage = 'Failed to delete item';
+            setTimeout(() => this.errorMessage = '', 3000);
+          }
+        });
+    }
+
+    this.closeDeleteModal();
+  }
 }
