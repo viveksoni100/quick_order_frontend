@@ -3,11 +3,12 @@ import { ActivatedRoute } from '@angular/router';
 import { API_DOMAIN } from '../constants';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-outlet-menu',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './outlet-menu.component.html',
   styleUrl: './outlet-menu.component.css'
 })
@@ -23,6 +24,7 @@ export class OutletMenuComponent {
   cart: any[] = [];
   cartTotal: number = 0;
   showCheckout: boolean = false;
+  searchText: string = '';
 
   constructor(private route: ActivatedRoute, private http: HttpClient) {
     this.route.queryParamMap.subscribe(params => {
@@ -46,40 +48,50 @@ export class OutletMenuComponent {
     });
   }
 
-  selectCategory(cat: string | null) {
-  this.selectedCategory = cat;
-  this.filterItems();
-}
-
-filterItems() {
-  this.filteredItems = this.selectedCategory
-    ? this.items.filter(i => i.category === this.selectedCategory)
-    : this.items;
-}
-
-addToCart(item: any) {
-  const found = this.cart.find(ci => ci.id === item.id);
-  if (found) {
-    found.quantity += 1;
-  } else {
-    this.cart.push({ ...item, quantity: 1 });
+  onSearchChange() {
+    this.filterItems();
   }
-  this.updateCartTotal();
-}
 
-removeFromCart(item: any) {
-  this.cart = this.cart.filter(ci => ci.id !== item.id);
-  this.updateCartTotal();
-}
+  selectCategory(cat: string | null) {
+    this.selectedCategory = cat;
+    this.filterItems();
+  }
 
-updateCartTotal() {
-  this.cartTotal = this.cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
-}
+  filterItems() {
+    // Apply category filter first
+    const base = this.selectedCategory
+      ? this.items.filter(i => i.category === this.selectedCategory)
+      : this.items;
+    // Then apply search only if 3+ chars
+    const q = this.searchText?.trim().toLowerCase() || '';
+    this.filteredItems = q.length >= 3
+      ? base.filter(i => i.name?.toLowerCase().includes(q))
+      : base;
+  }
 
-checkout() {
-  this.cart = [];
-  this.cartTotal = 0;
-  this.showCheckout = true;
-  setTimeout(() => this.showCheckout = false, 3000);
-}
+  addToCart(item: any) {
+    const found = this.cart.find(ci => ci.id === item.id);
+    if (found) {
+      found.quantity += 1;
+    } else {
+      this.cart.push({ ...item, quantity: 1 });
+    }
+    this.updateCartTotal();
+  }
+
+  removeFromCart(item: any) {
+    this.cart = this.cart.filter(ci => ci.id !== item.id);
+    this.updateCartTotal();
+  }
+
+  updateCartTotal() {
+    this.cartTotal = this.cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  }
+
+  checkout() {
+    this.cart = [];
+    this.cartTotal = 0;
+    this.showCheckout = true;
+    setTimeout(() => this.showCheckout = false, 3000);
+  }
 }

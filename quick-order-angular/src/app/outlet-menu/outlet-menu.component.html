@@ -46,7 +46,15 @@
 
     <!-- Main Content: Menu Items -->
     <main class="col-md-7 py-4">
-      <h2 class="mb-4 text-center text-primary">Hotel Menu</h2>
+      <div class="d-flex justify-content-center mb-4">
+        <input
+          type="search"
+          class="form-control w-75 w-md-50"
+          placeholder="Search your menu here ..."
+          [(ngModel)]="searchText"
+          (input)="onSearchChange()"
+        />
+      </div>
       <div class="row g-4">
         <div class="col-md-6 col-lg-4" *ngFor="let item of filteredItems">
           <div class="card h-100 shadow-sm border-0">
