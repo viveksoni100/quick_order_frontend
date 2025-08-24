@@ -132,6 +132,18 @@
           </div>
         </div>
 
+        <!-- Preparation note -->
+        <div class="mt-3">
+          <label for="prepNote" class="form-label small mb-1">Preparation note</label>
+          <textarea
+            id="prepNote"
+            class="form-control"
+            rows="2"
+            [(ngModel)]="preparationNote"
+            placeholder="e.g., no onion no garlic"
+          ></textarea>
+        </div>
+
         <button class="btn btn-success w-100 mt-3" (click)="checkout()">Checkout</button>
       </div>
 

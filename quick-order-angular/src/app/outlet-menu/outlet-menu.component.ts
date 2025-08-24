@@ -37,6 +37,8 @@ export class OutletMenuComponent {
   netPayable = 0;
   roundOff = 0;
 
+  preparationNote: string = '';
+
   private isBrowser = false;
 
   constructor(private http: HttpClient, private route: ActivatedRoute, @Inject(PLATFORM_ID) platformId: Object) {
@@ -160,8 +162,10 @@ export class OutletMenuComponent {
   }
 
   checkout() {
+    // Use this.preparationNote when sending order later
     this.cart = [];
     this.updateCartTotal();
+    this.preparationNote = '';
     this.showCheckout = true;
     setTimeout(() => this.showCheckout = false, 3000);
   }
