@@ -39,6 +39,17 @@ export class OutletMenuComponent {
 
   preparationNote: string = '';
 
+  // checkout modal
+  showCheckoutModal = false;
+  customerName = '';
+  customerPhone = '';
+  customerEmail = '';
+  formSubmitted = false;
+
+  // NEW: modal error + submitting state
+  modalError: string = '';
+  isSubmitting = false;
+
   private isBrowser = false;
 
   constructor(private http: HttpClient, private route: ActivatedRoute, @Inject(PLATFORM_ID) platformId: Object) {
@@ -161,12 +172,119 @@ export class OutletMenuComponent {
     this.netPayable = rounded; // integer rupees
   }
 
-  checkout() {
-    // Use this.preparationNote when sending order later
-    this.cart = [];
-    this.updateCartTotal();
-    this.preparationNote = '';
-    this.showCheckout = true;
-    setTimeout(() => this.showCheckout = false, 3000);
+  openCheckoutModal() {
+    this.formSubmitted = false;
+    this.modalError = '';
+    this.isSubmitting = false;
+    this.showCheckoutModal = true;
+  }
+
+  closeCheckoutModal() {
+    this.showCheckoutModal = false;
+    this.isSubmitting = false;
+    this.modalError = '';
+  }
+
+  isValidPhone(v: string | null | undefined): boolean {
+    const s = (v || '').replace(/[^0-9]/g, '');
+    return s.length >= 7; // simple validation
+  }
+
+  proceedToPayment() {
+    this.formSubmitted = true;
+    this.modalError = '';
+    if (!this.customerName?.trim() || !this.isValidPhone(this.customerPhone)) {
+      return;
+    }
+
+    const token = this.getFromStorage('token');
+    if (!token) {
+      this.modalError = 'Unauthorized. Please log in again.';
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    const nowIso = new Date().toISOString();
+    const orderQty = this.cart.reduce((sum, i) => sum + i.quantity, 0);
+
+    const sgstPerc = this.outletDetails?.sgst ?? 0;
+    const cgstPerc = this.outletDetails?.cgst ?? 0;
+    const platformChargePerc = this.outletDetails?.businessType === 2 ? (this.outletDetails?.platformCharge ?? 0) : 0;
+    const discountPerc = this.outletDetails?.discount ?? 0;
+    const taxPerc = this.outletDetails?.tax ?? 0;
+
+    // Include createdAt/updatedAt for each order item (DB requires non-null created_at)
+    const orderItems = this.cart.map(i => ({
+      itemId: i.id,
+      unitPrice: Number(i.price),
+      quantity: Number(i.quantity),
+      totalAmount: Number(i.price) * Number(i.quantity),
+      createdAt: nowIso,
+      updatedAt: nowIso
+    }));
+
+    const payload = {
+      customerName: this.customerName.trim(),
+      customerPhone: this.customerPhone.trim(),
+      customerEmail: (this.customerEmail || '').trim() || null,
+
+      billAmount: Number(this.cartTotal),
+      netPayableAmount: Number(this.netPayable),
+
+      tax: Number(taxPerc),
+      discountPerc: Number(discountPerc),
+      discountAmount: Number(this.discountAmt),
+
+      platformChargePerc: Number(platformChargePerc),
+      platformChargeAmount: Number(this.platformChargeAmt),
+
+      outletId: Number(this.outletId ?? 0),
+      orderQty: Number(orderQty),
+
+      preparationNotes: this.preparationNote?.trim() || '',
+      status: 1,
+
+      createdAt: nowIso,
+      updatedAt: nowIso,
+
+      ipAddress: '',                       // optional; fill if you capture client IP
+      device: this.isBrowser ? navigator.userAgent : '',
+
+      sgstPerc: Number(sgstPerc),
+      cgstPerc: Number(cgstPerc),
+      sgstAmount: Number(this.sgstAmt),
+      cgstAmount: Number(this.cgstAmt),
+
+      roundOffAmount: Number(this.roundOff),
+
+      orderItems
+    };
+
+    this.isSubmitting = true;
+    this.http.post(`${API_DOMAIN}api/order/create`, payload, { headers, responseType: 'text' })
+      .subscribe({
+        next: (msg: string) => {
+          this.isSubmitting = false;
+          this.closeCheckoutModal();
+          this.cart = [];
+          this.preparationNote = '';
+          this.customerName = '';
+          this.customerPhone = '';
+          this.customerEmail = '';
+          this.updateCartTotal();
+          this.showCheckout = true;
+          setTimeout(() => (this.showCheckout = false), 10000);
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          // Prefer backend text, fall back to generic message
+          const backendMsg = typeof err?.error === 'string' ? err.error : (err?.message || 'Failed to create order.');
+          this.modalError = backendMsg;
+        }
+      });
   }
 }

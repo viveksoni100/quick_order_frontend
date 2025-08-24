@@ -144,12 +144,62 @@
           ></textarea>
         </div>
 
-        <button class="btn btn-success w-100 mt-3" (click)="checkout()">Checkout</button>
+        <button class="btn btn-success w-100 mt-3" (click)="openCheckoutModal()">Checkout</button>
       </div>
 
       <div *ngIf="showCheckout" class="alert alert-success mt-3">
         Thank you for your order!
       </div>
     </aside>
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div
+  class="modal fade show"
+  tabindex="-1"
+  role="dialog"
+  *ngIf="showCheckoutModal"
+  [ngStyle]="{ display: showCheckoutModal ? 'block' : 'none', background: 'rgba(0,0,0,0.5)' }"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Customer Details</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeCheckoutModal()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- ERROR inside modal -->
+        <div *ngIf="modalError" class="alert alert-danger py-2 px-3">
+          {{ modalError }}
+        </div>
+
+        <form (ngSubmit)="proceedToPayment()" #checkoutForm="ngForm">
+          <div class="mb-3">
+            <label class="form-label">Name <span class="text-danger">*</span></label>
+            <input class="form-control" [(ngModel)]="customerName" name="customerName" required />
+            <div class="text-danger small mt-1" *ngIf="formSubmitted && !customerName?.trim()">Name is required.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone <span class="text-danger">*</span></label>
+            <input class="form-control" [(ngModel)]="customerPhone" name="customerPhone" required />
+            <div class="text-danger small mt-1" *ngIf="formSubmitted && !isValidPhone(customerPhone)">
+              Enter a valid phone number.
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email (optional)</label>
+            <input class="form-control" [(ngModel)]="customerEmail" name="customerEmail" type="email" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" (click)="closeCheckoutModal()" [disabled]="isSubmitting">Cancel</button>
+        <button class="btn btn-primary" type="button" (click)="proceedToPayment()" [disabled]="isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          Proceed to Payment
+        </button>
+      </div>
+    </div>
   </div>
 </div>
