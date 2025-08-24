@@ -50,6 +50,8 @@ export class OutletMenuComponent {
   modalError: string = '';
   isSubmitting = false;
 
+  clientIp: string = '';
+
   private isBrowser = false;
 
   constructor(private http: HttpClient, private route: ActivatedRoute, @Inject(PLATFORM_ID) platformId: Object) {
@@ -69,8 +71,25 @@ export class OutletMenuComponent {
 
       if (this.outletId) this.fetchOutletDetails(this.outletId);
       if (this.menuId) this.fetchItems(this.menuId);
+      if (this.isBrowser) this.fetchClientIp();   // fetch public IP
       this.computeBillBreakup();
     });
+  }
+
+  // Fetch public IP with fallback
+  private fetchClientIp() {
+    this.http.get<{ ip: string }>('https://api.ipify.org?format=json')
+      .subscribe({
+        next: (res) => this.clientIp = (res?.ip || '').trim(),
+        error: () => {
+          // fallback to plain-text endpoint
+          this.http.get('https://ifconfig.me/ip', { responseType: 'text' })
+            .subscribe({
+              next: (ip) => this.clientIp = (ip || '').trim(),
+              error: () => this.clientIp = ''
+            });
+        }
+      });
   }
 
   fetchOutletDetails(outletId: number) {
@@ -251,7 +270,7 @@ export class OutletMenuComponent {
       createdAt: nowIso,
       updatedAt: nowIso,
 
-      ipAddress: '',                       // optional; fill if you capture client IP
+      ipAddress: this.clientIp,              // use fetched IP
       device: this.isBrowser ? navigator.userAgent : '',
 
       sgstPerc: Number(sgstPerc),
